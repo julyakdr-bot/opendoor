@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Открытая дверь</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    background: #1a1a2e;
+    user-select: none;
+  }
+  
+  /* Комната с коричневыми обоями */
+  .room {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: 
+      repeating-linear-gradient(90deg, 
+        rgba(0,0,0,0.06) 0px, 
+        rgba(0,0,0,0.06) 2px, 
+        transparent 2px, 
+        transparent 40px),
+      linear-gradient(180deg, #8B5A2B 0%, #6B4423 50%, #4A2F1A 100%);
+    overflow: hidden;
+    transition: background 1s ease;
+  }
+  
+  /* Затемнение комнаты (до включения света) */
+  .darkness {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.75) 100%);
+    pointer-events: none;
+    transition: opacity 1.2s ease;
+    z-index: 5;
+  }
+  
+  .darkness.off {
+    opacity: 0;
+  }
+  
+  /* Пол */
+  .floor {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 30%;
+    background: linear-gradient(180deg, #3d2817 0%, #2a1a0f 100%);
+    border-top: 3px solid #5a3a20;
+    z-index: 2;
+  }
+  
+  /* ===== Дверной проём — вид на квартиру ===== */
+  .doorway {
+    position: absolute;
+    left: 50%;
+    bottom: 30%;
+    transform: translateX(-50%);
+    width: 220px;
+    height: 360px;
+    background: #f5e6d3;
+    border: 8px solid #3d2817;
+    border-bottom: none;
+    overflow: hidden;
+    z-index: 3;
+  }
+  
+  /* Стена квартиры */
+  .apt-wall {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #f5e6d3 0%, #e8d4b8 100%);
+  }
+  
+  /* Пол квартиры */
+  .apt-floor {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 35%;
+    background: 
+      repeating-linear-gradient(90deg,
+        #a0704a 0px,
+        #a0704a 28px,
+        #8b5a3c 28px,
+        #8b5a3c 30px),
+      linear-gradient(180deg, #b8875f 0%, #8b5a3c 100%);
+    border-top: 2px solid #6b4423;
+  }
+  
+  /* Ковёр */
+  .apt-rug {
+    position: absolute;
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 35px;
+    background: linear-gradient(135deg, #c0392b 0%, #922b21 100%);
+    border: 2px solid #7b241c;
+    border-radius: 4px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+  }
+  .apt-rug::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px dashed #f5b041;
+    border-radius: 2px;
+  }
+  
+  /* Окно квартиры */
+  .apt-window {
+    position: absolute;
+    top: 15%;
+    left: 10%;
+    width: 70px;
+    height: 80px;
+    background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 100%);
+    border: 4px solid #5a3a20;
+    box-shadow: inset 0 0 10px rgba(135, 206, 235, 0.5);
+  }
+  /* Рама окна — крест */
+  .apt-window::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #5a3a20;
+    transform: translateY(-50%);
+  }
+  .apt-window::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #5a3a20;
+    transform: translateX(-50%);
+  }
+  
+  /* Облако в окне */
+  .apt-cloud {
+    position: absolute;
+    top: 20%;
+    left: 15%;
+    width: 25px;
+    height: 8px;
+    background: white;
+    border-radius: 10px;
+    opacity: 0.9;
+  }
+  
+  /* Картина на стене */
+  .apt-painting {
+    position: absolute;
+    top: 18%;
+    right: 10%;
+    width: 55px;
+    height: 45px;
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 50%, #d35400 100%);
+    border: 4px solid #3d2817;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  }
+  .apt-painting::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(180deg, #27ae60 0%, #1e8449 100%);
+  }
+  .apt-painting::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    right: 15%;
+    width: 10px;
+    height: 10px;
+    background: #f1c40f;
+    border-radius: 50%;
+    box-shadow: 0 0 5px #f1c40f;
+  }
+  
+  /* Диван */
+  .apt-sofa {
+    position: absolute;
+    bottom: 35%;
+    right: 8%;
+    width: 90px;
+    height: 45px;
+    background: linear-gradient(180deg, #3498db 0%, #2874a6 100%);
+    border-radius: 8px 8px 4px 4px;
+    border: 2px solid #1b4f72;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+  }
+  /* Подушки дивана */
+  .apt-sofa::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 8px;
+    width: 32px;
+    height: 22px;
+    background: #5dade2;
+    border-radius: 6px;
+    border: 1px solid #1b4f72;
+  }
+  .apt-sofa::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    width: 32px;
+    height: 22px;
+    background: #5dade2;
+    border-radius: 6px;
+    border: 1px solid #1b4f72;
+  }
+  
+  /* Торшер */
+  .apt-lamp {
+    position: absolute;
+    bottom: 35%;
+    left: 8%;
+    width: 4px;
+    height: 55px;
+    background: #2c3e50;
+  }
+  .apt-lamp::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 18px;
+    background: linear-gradient(180deg, #f39c12 0%, #e67e22 100%);
+    border-radius: 50% 50% 10% 10%;
+    box-shadow: 0 0 12px rgba(243, 156, 18, 0.6);
+  }
+  .apt-lamp::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 4px;
+    background: #2c3e50;
+    border-radius: 2px;
+  }
+  
+  /* ЖЁЛТАЯ ДВЕРЬ */
+  .door {
+    position: absolute;
+    left: 50%;
+    bottom: 30%;
+    transform: translateX(-50%);
+    width: 220px;
+    height: 360px;
+    background: linear-gradient(135deg, #FFE066 0%, #FFD54F 40%, #FFC107 70%, #F9A825 100%);
+    border: 4px solid #B8860B;
+    cursor: pointer;
+    transform-origin: left center;
+    transition: transform 1.5s ease-in-out;
+    box-shadow: 
+      inset 0 0 30px rgba(180, 120, 0, 0.4),
+      0 0 20px rgba(255, 193, 7, 0.3);
+    z-index: 4;
+  }
+  
+  .door.open {
+    transform: translateX(-50%) perspective(1000px) rotateY(-85deg);
+  }
+  
+  /* Панели жёлтой двери */
+  .door-panel {
+    position: absolute;
+    left: 25px;
+    width: 170px;
+    height: 120px;
+    border: 3px solid #B8860B;
+    background: linear-gradient(135deg, rgba(180, 120, 0, 0.25), rgba(255, 255, 255, 0.15));
+    box-shadow: inset 0 0 10px rgba(180, 120, 0, 0.2);
+  }
+  .door-panel.top { top: 30px; }
+  .door-panel.bottom { top: 200px; }
+  
+  /* Ручка двери */
+  .handle {
+    position: absolute;
+    right: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle at 30% 30%, #FFD700, #B8860B);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  }
+  
+  /* Замочная скважина */
+  .keyhole {
+    position: absolute;
+    right: 28px;
+    top: calc(50% + 30px);
+    width: 14px;
+    height: 22px;
+    background: #000;
+    border-radius: 50% 50% 20% 20%;
+  }
+  
+  /* Ключ */
+  .key {
+    position: absolute;
+    bottom: 15%;
+    left: 15%;
+    font-size: 60px;
+    cursor: pointer;
+    transition: transform 0.3s, filter 0.3s;
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
+    animation: keyFloat 2s ease-in-out infinite;
+    z-index: 10;
+  }
+  
+  @keyframes keyFloat {
+    0%, 100% { transform: translateY(0) rotate(-15deg); }
+    50% { transform: translateY(-10px) rotate(-5deg); }
+  }
+  
+  .key:hover {
+    transform: scale(1.2) rotate(10deg);
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 1));
+  }
+  
+  .key.found {
+    animation: keyFound 0.6s forwards;
+    cursor: default;
+  }
+  
+  @keyframes keyFound {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.5) rotate(360deg); }
+    100% { transform: scale(0) rotate(720deg); opacity: 0; }
+  }
+  
+  /* ===== ЧЁРНЫЙ ВЫКЛЮЧАТЕЛЬ (виден сразу) ===== */
+  .switch-plate {
+    position: absolute;
+    top: 45%;
+    right: 12%;
+    width: 70px;
+    height: 110px;
+    background: linear-gradient(135deg, #2a2a2a 0%, #0a0a0a 60%, #1a1a1a 100%);
+    border: 2px solid #000;
+    border-radius: 8px;
+    box-shadow: 
+      0 4px 10px rgba(0,0,0,0.8),
+      inset 0 1px 2px rgba(255,255,255,0.1),
+      inset 0 -2px 4px rgba(0,0,0,0.6);
+    cursor: pointer;
+    z-index: 10;
+    transition: box-shadow 0.3s, filter 0.5s;
+  }
+  
+  /* Неактивное состояние — серый, тусклый */
+  .switch-plate.inactive {
+    filter: grayscale(1) brightness(0.5);
+    cursor: not-allowed;
+  }
+  
+  /* Активное состояние — пульсация */
+  .switch-plate.active {
+    animation: switchPulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes switchPulse {
+    0%, 100% { box-shadow: 0 4px 10px rgba(0,0,0,0.8), 0 0 0 rgba(255, 165, 0, 0); }
+    50% { box-shadow: 0 4px 10px rgba(0,0,0,0.8), 0 0 25px rgba(255, 165, 0, 0.9); }
+  }
+  
+  .switch-plate.active:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.9), 0 0 30px rgba(255, 165, 0, 1);
+  }
+  
+  /* Тумблер */
+  .switch-toggle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 50px;
+    background: linear-gradient(135deg, #e0e0e0 0%, #9e9e9e 50%, #616161 100%);
+    border-radius: 4px;
+    transition: transform 0.3s ease, background 0.3s ease;
+    box-shadow: 
+      inset 0 -3px 5px rgba(0,0,0,0.4),
+      inset 0 2px 3px rgba(255,255,255,0.3),
+      0 2px 4px rgba(0,0,0,0.6);
+  }
+  
+  .switch-plate .switch-toggle {
+    transform: translate(-50%, -20%);
+  }
+  
+  .switch-plate.on .switch-toggle {
+    transform: translate(-50%, -80%);
+    background: linear-gradient(135deg, #FFA500 0%, #FF6B00 100%);
+    box-shadow: 
+      0 0 15px rgba(255, 165, 0, 0.9),
+      inset 0 -3px 5px rgba(0,0,0,0.3),
+      inset 0 2px 3px rgba(255,255,255,0.4);
+  }
+  
+  /* Лампочка-индикатор */
+  .switch-light {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 10px;
+    background: #333;
+    border-radius: 50%;
+    transition: background 0.3s, box-shadow 0.3s;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8);
+  }
+  
+  .switch-plate.on .switch-light {
+    background: #FFA500;
+    box-shadow: 0 0 15px #FFA500, 0 0 25px rgba(255, 165, 0, 0.6);
+  }
+  
+  /* ===== ОРАНЖЕВЫЕ ИНДИКАТОРЫ ===== */
+  .key-indicator {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: rgba(0,0,0,0.7);
+    color: #888;
+    border-radius: 10px;
+    font-size: 16px;
+    border: 2px solid #444;
+    transition: all 0.3s;
+    z-index: 20;
+  }
+  
+  .key-indicator.has-key {
+    color: #FFA500;
+    border-color: #FFA500;
+    box-shadow: 0 0 15px rgba(255, 165, 0, 0.6);
+  }
+  
+  .light-indicator {
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    padding: 10px 20px;
+    background: rgba(0,0,0,0.7);
+    color: #888;
+    border-radius: 10px;
+    font-size: 16px;
+    border: 2px solid #444;
+    transition: all 0.3s;
+    z-index: 20;
+  }
+  
+  .light-indicator.on {
+    color: #FFA500;
+    border-color: #FFA500;
+    box-shadow: 0 0 15px rgba(255, 165, 0, 0.6);
+  }
+  
+  /* Сообщение */
+  .message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.9);
+    color: white;
+    padding: 20px 40px;
+    border-radius: 15px;
+    font-size: 20px;
+    border: 3px solid #FFA500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+    z-index: 100;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(255, 165, 0, 0.5);
+  }
+  
+  .message.show {
+    opacity: 1;
+  }
+  
+  /* Поздравление за дверью */
+  .congrats {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 22px;
+    font-weight: bold;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
+    opacity: 0;
+    transition: opacity 1s ease-in 1s;
+    pointer-events: none;
+    background: rgba(255, 165, 0, 0.85);
+    padding: 10px 20px;
+    border-radius: 10px;
+    z-index: 10;
+  }
+  
+  .congrats.show {
+    opacity: 1;
+  }
+  
+  /* Заголовок */
+  .title {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #FFA500;
+    font-size: 28px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    letter-spacing: 2px;
+    z-index: 20;
+  }
+  
+  /* ===== ОРАНЖЕВАЯ КНОПКА «Начать заново» ===== */
+  .restart-btn {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #FFA500 0%, #FF6B00 100%);
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    border: 3px solid #fff;
+    border-radius: 12px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 0 20px rgba(255, 165, 0, 0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease, transform 0.6s ease, background 0.3s, box-shadow 0.3s;
+    z-index: 50;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  }
+  
+  .restart-btn.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+  
+  .restart-btn:hover {
+    background: linear-gradient(135deg, #FFB733 0%, #FF8533 100%);
+    box-shadow: 0 0 35px rgba(255, 165, 0, 1);
+    transform: translateX(-50%) translateY(-3px);
+  }
+  
+  .restart-btn:active {
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="room" id="room">
+  <div class="title">🚪 ОТКРЫТАЯ ДВЕРЬ 🗝️</div>
+  
+  <div class="key-indicator" id="keyIndicator">🗝️ Ключ: не найден</div>
+  <div class="light-indicator" id="lightIndicator">💡 Свет: выключен</div>
+  
+  <!-- Затемнение комнаты -->
+  <div class="darkness" id="darkness"></div>
+  
+  <!-- Дверной проём — вид на квартиру -->
+  <div class="doorway">
+    <div class="apt-wall"></div>
+    <div class="apt-floor"></div>
+    <div class="apt-rug"></div>
+    <div class="apt-window">
+      <div class="apt-cloud"></div>
+    </div>
+    <div class="apt-painting"></div>
+    <div class="apt-sofa"></div>
+    <div class="apt-lamp"></div>
+    <div class="congrats" id="congrats">✨ Добро пожаловать домой! ✨</div>
+  </div>
+  
+  <!-- Дверь -->
+  <div class="door" id="door">
+    <div class="door-panel top"></div>
+    <div class="door-panel bottom"></div>
+    <div class="handle"></div>
+    <div class="keyhole"></div>
+  </div>
+  
+  <!-- Ключ -->
+  <div class="key" id="key">🗝️</div>
+  
+  <!-- Выключатель света (виден сразу, но неактивен) -->
+  <div class="switch-plate inactive" id="switch">
+    <div class="switch-light"></div>
+    <div class="switch-toggle"></div>
+  </div>
+  
+  <!-- Пол -->
+  <div class="floor"></div>
+  
+  <!-- Сообщение -->
+  <div class="message" id="message"></div>
+  
+  <!-- Кнопка «Начать заново» -->
+  <button class="restart-btn" id="restartBtn">🔄 Начать заново</button>
+</div>
+
+<script>
+  const key = document.getElementById('key');
+  const door = document.getElementById('door');
+  const keyIndicator = document.getElementById('keyIndicator');
+  const lightIndicator = document.getElementById('lightIndicator');
+  const message = document.getElementById('message');
+  const congrats = document.getElementById('congrats');
+  const restartBtn = document.getElementById('restartBtn');
+  const switchEl = document.getElementById('switch');
+  const darkness = document.getElementById('darkness');
+  
+  // Состояния объектов
+  let keyFound = false;
+  let lightOn = false;
+  let doorOpen = false;
+  
+  function showMessage(text, duration = 1500) {
+    message.textContent = text;
+    message.classList.add('show');
+    setTimeout(() => message.classList.remove('show'), duration);
+  }
+  
+  // Правило 1: клик по ключу → ключ найден
+  key.addEventListener('click', () => {
+    if (keyFound) return;
+    keyFound = true;
+    key.classList.add('found');
+    keyIndicator.textContent = '🗝️ Ключ: найден!';
+    keyIndicator.classList.add('has-key');
+    showMessage('✅ Ключ найден! Включи свет.', 2000);
+    
+    // Активируем выключатель (он уже виден)
+    switchEl.classList.remove('inactive');
+    switchEl.classList.add('active');
+  });
+  
+  // Правило 2: клик по выключателю + ключ найден → свет включается
+  switchEl.addEventListener('click', () => {
+    if (!keyFound) {
+      showMessage('🔑 Сначала найди ключ!', 1500);
+      return;
+    }
+    if (lightOn) return;
+    lightOn = true;
+    switchEl.classList.add('on');
+    switchEl.classList.remove('active');
+    darkness.classList.add('off');
+    lightIndicator.textContent = '💡 Свет: включён!';
+    lightIndicator.classList.add('on');
+    showMessage('💡 Свет включён! Теперь открой дверь.', 2000);
+  });
+  
+  // Правило 3: клик по двери + все условия → дверь открывается
+  door.addEventListener('click', () => {
+    if (doorOpen) return;
+    
+    if (!keyFound) {
+      showMessage('🔒 Дверь заперта. Нужен ключ!', 1500);
+      shakeDoor();
+      return;
+    }
+    
+    if (!lightOn) {
+      showMessage('🌑 Слишком темно! Включи свет.', 1500);
+      shakeDoor();
+      return;
+    }
+    
+    doorOpen = true;
+    door.classList.add('open');
+    congrats.classList.add('show');
+    showMessage('🎉 Дверь открыта!', 2500);
+    
+    setTimeout(() => {
+      restartBtn.classList.add('show');
+    }, 1500);
+  });
+  
+  function shakeDoor() {
+    door.animate([
+      { transform: 'translateX(-50%)' },
+      { transform: 'translateX(calc(-50% - 8px))' },
+      { transform: 'translateX(calc(-50% + 8px))' },
+      { transform: 'translateX(-50%)' }
+    ], { duration: 300 });
+  }
+  
+  // Полный сброс
+  restartBtn.addEventListener('click', () => {
+    keyFound = false;
+    lightOn = false;
+    doorOpen = false;
+    
+    key.classList.remove('found');
+    key.style.opacity = '';
+    key.style.transform = '';
+    key.style.animation = 'none';
+    key.offsetHeight;
+    key.style.animation = '';
+    
+    door.classList.remove('open');
+    congrats.classList.remove('show');
+    
+    switchEl.classList.remove('on', 'active');
+    switchEl.classList.add('inactive');
+    darkness.classList.remove('off');
+    
+    keyIndicator.textContent = '🗝️ Ключ: не найден';
+    keyIndicator.classList.remove('has-key');
+    lightIndicator.textContent = '💡 Свет: выключен';
+    lightIndicator.classList.remove('on');
+    
+    restartBtn.classList.remove('show');
+    
+    showMessage('🔄 Начинаем сначала!', 1500);
+  });
+</script>
+
+</body>
+</html>
